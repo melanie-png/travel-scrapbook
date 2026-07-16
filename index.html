@@ -521,6 +521,91 @@
   }
   .link-remove:hover { color: var(--terracotta); }
 
+    /* ── NAV TABS ── */
+  .nav-tabs {
+    background: var(--dark-brown);
+    display: flex;
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .nav-tab {
+    padding: 12px 28px;
+    background: transparent;
+    border: none;
+    color: var(--sand);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-tab:hover { color: var(--cream); }
+  .nav-tab.active { color: var(--terracotta); border-bottom-color: var(--terracotta); }
+
+  /* ── INSPIRATION ── */
+  .insp-search-bar {
+    padding: 16px 40px;
+    background: var(--parchment);
+    border-bottom: 1px solid var(--sand);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .insp-region-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .insp-chip {
+    background: transparent;
+    border: 1.5px solid var(--sand);
+    color: var(--warm-brown);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    transition: all 0.2s;
+  }
+  .insp-chip:hover, .insp-chip.active { background: var(--warm-brown); border-color: var(--warm-brown); color: var(--white); }
+
+  .insp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    padding: 28px 40px;
+  }
+  .country-card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid rgba(212,184,150,0.4);
+    box-shadow: 0 1px 6px var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .country-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px var(--shadow); }
+  .country-flag { font-size: 2.4rem; margin-bottom: 8px; line-height: 1; }
+  .country-name { font-family: 'Playfair Display', serif; font-size: 0.95rem; color: var(--dark-brown); margin-bottom: 4px; }
+  .country-region { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 10px; }
+  .country-add-btn {
+    background: var(--terracotta);
+    color: var(--white);
+    border: none;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.75rem;
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .country-add-btn:hover { background: #a8573e; }
+  .country-add-btn.added { background: var(--sage); cursor: default; }
+
   @media (max-width: 600px) {
     .header { padding: 20px; flex-direction: column; gap: 14px; align-items: flex-start; }
     .filter-bar { padding: 12px 16px; }
@@ -561,6 +646,12 @@
   </div>
 </div>
 
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <button class="nav-tab active" id="tab-scrapbook" onclick="switchTab('scrapbook')">📖 My Scrapbook</button>
+  <button class="nav-tab" id="tab-inspiration" onclick="switchTab('inspiration')">🌍 Country Explorer</button>
+</div>
+
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <span class="filter-label">Status</span>
@@ -586,6 +677,15 @@
 <div class="main">
   <div class="stats-row" id="stats-row"></div>
   <div class="grid" id="grid"></div>
+</div>
+
+<!-- INSPIRATION SECTION -->
+<div id="inspiration-section" style="display:none;">
+  <div class="insp-search-bar">
+    <input class="search-input" type="text" id="insp-search" placeholder="🔍 Search countries or regions…" oninput="filterCountries()" style="width:300px;">
+    <div class="insp-region-chips" id="insp-region-chips"></div>
+  </div>
+  <div class="insp-grid" id="insp-grid"></div>
 </div>
 
 <!-- ADD/EDIT OVERLAY -->
@@ -970,6 +1070,101 @@ document.getElementById('auth-overlay').addEventListener('click', function(e) {
     pendingAction = null;
   }
 });
+
+
+// ── TABS ──
+let activeTab = 'scrapbook';
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-scrapbook').classList.toggle('active', tab === 'scrapbook');
+  document.getElementById('tab-inspiration').classList.toggle('active', tab === 'inspiration');
+  document.querySelector('.filter-bar').style.display = tab === 'scrapbook' ? '' : 'none';
+  document.querySelector('.main').style.display = tab === 'scrapbook' ? '' : 'none';
+  document.getElementById('inspiration-section').style.display = tab === 'inspiration' ? '' : 'none';
+  if (tab === 'inspiration') renderCountries();
+}
+
+// ── COUNTRY DATA ──
+const COUNTRIES = [
+  // Europe
+  {name:"Albania",flag:"🇦🇱",region:"Europe"},{name:"Andorra",flag:"🇦🇩",region:"Europe"},{name:"Austria",flag:"🇦🇹",region:"Europe"},{name:"Belgium",flag:"🇧🇪",region:"Europe"},{name:"Bosnia",flag:"🇧🇦",region:"Europe"},{name:"Bulgaria",flag:"🇧🇬",region:"Europe"},{name:"Croatia",flag:"🇭🇷",region:"Europe"},{name:"Cyprus",flag:"🇨🇾",region:"Europe"},{name:"Czech Republic",flag:"🇨🇿",region:"Europe"},{name:"Denmark",flag:"🇩🇰",region:"Europe"},{name:"Estonia",flag:"🇪🇪",region:"Europe"},{name:"Finland",flag:"🇫🇮",region:"Europe"},{name:"France",flag:"🇫🇷",region:"Europe"},{name:"Germany",flag:"🇩🇪",region:"Europe"},{name:"Greece",flag:"🇬🇷",region:"Europe"},{name:"Hungary",flag:"🇭🇺",region:"Europe"},{name:"Iceland",flag:"🇮🇸",region:"Europe"},{name:"Ireland",flag:"🇮🇪",region:"Europe"},{name:"Italy",flag:"🇮🇹",region:"Europe"},{name:"Kosovo",flag:"🇽🇰",region:"Europe"},{name:"Latvia",flag:"🇱🇻",region:"Europe"},{name:"Liechtenstein",flag:"🇱🇮",region:"Europe"},{name:"Lithuania",flag:"🇱🇹",region:"Europe"},{name:"Luxembourg",flag:"🇱🇺",region:"Europe"},{name:"Malta",flag:"🇲🇹",region:"Europe"},{name:"Moldova",flag:"🇲🇩",region:"Europe"},{name:"Monaco",flag:"🇲🇨",region:"Europe"},{name:"Montenegro",flag:"🇲🇪",region:"Europe"},{name:"Netherlands",flag:"🇳🇱",region:"Europe"},{name:"North Macedonia",flag:"🇲🇰",region:"Europe"},{name:"Norway",flag:"🇳🇴",region:"Europe"},{name:"Poland",flag:"🇵🇱",region:"Europe"},{name:"Portugal",flag:"🇵🇹",region:"Europe"},{name:"Romania",flag:"🇷🇴",region:"Europe"},{name:"San Marino",flag:"🇸🇲",region:"Europe"},{name:"Serbia",flag:"🇷🇸",region:"Europe"},{name:"Slovakia",flag:"🇸🇰",region:"Europe"},{name:"Slovenia",flag:"🇸🇮",region:"Europe"},{name:"Spain",flag:"🇪🇸",region:"Europe"},{name:"Sweden",flag:"🇸🇪",region:"Europe"},{name:"Switzerland",flag:"🇨🇭",region:"Europe"},{name:"Turkey",flag:"🇹🇷",region:"Europe"},{name:"Ukraine",flag:"🇺🇦",region:"Europe"},{name:"United Kingdom",flag:"🇬🇧",region:"Europe"},{name:"Vatican City",flag:"🇻🇦",region:"Europe"},
+  // Asia
+  {name:"Afghanistan",flag:"🇦🇫",region:"Asia"},{name:"Armenia",flag:"🇦🇲",region:"Asia"},{name:"Azerbaijan",flag:"🇦🇿",region:"Asia"},{name:"Bahrain",flag:"🇧🇭",region:"Asia"},{name:"Bangladesh",flag:"🇧🇩",region:"Asia"},{name:"Bhutan",flag:"🇧🇹",region:"Asia"},{name:"Brunei",flag:"🇧🇳",region:"Asia"},{name:"Cambodia",flag:"🇰🇭",region:"Asia"},{name:"China",flag:"🇨🇳",region:"Asia"},{name:"Georgia",flag:"🇬🇪",region:"Asia"},{name:"India",flag:"🇮🇳",region:"Asia"},{name:"Indonesia",flag:"🇮🇩",region:"Asia"},{name:"Iran",flag:"🇮🇷",region:"Asia"},{name:"Iraq",flag:"🇮🇶",region:"Asia"},{name:"Israel",flag:"🇮🇱",region:"Asia"},{name:"Japan",flag:"🇯🇵",region:"Asia"},{name:"Jordan",flag:"🇯🇴",region:"Asia"},{name:"Kazakhstan",flag:"🇰🇿",region:"Asia"},{name:"Kuwait",flag:"🇰🇼",region:"Asia"},{name:"Kyrgyzstan",flag:"🇰🇬",region:"Asia"},{name:"Laos",flag:"🇱🇦",region:"Asia"},{name:"Lebanon",flag:"🇱🇧",region:"Asia"},{name:"Malaysia",flag:"🇲🇾",region:"Asia"},{name:"Maldives",flag:"🇲🇻",region:"Asia"},{name:"Mongolia",flag:"🇲🇳",region:"Asia"},{name:"Myanmar",flag:"🇲🇲",region:"Asia"},{name:"Nepal",flag:"🇳🇵",region:"Asia"},{name:"North Korea",flag:"🇰🇵",region:"Asia"},{name:"Oman",flag:"🇴🇲",region:"Asia"},{name:"Pakistan",flag:"🇵🇰",region:"Asia"},{name:"Palestine",flag:"🇵🇸",region:"Asia"},{name:"Philippines",flag:"🇵🇭",region:"Asia"},{name:"Qatar",flag:"🇶🇦",region:"Asia"},{name:"Russia",flag:"🇷🇺",region:"Asia"},{name:"Saudi Arabia",flag:"🇸🇦",region:"Asia"},{name:"Singapore",flag:"🇸🇬",region:"Asia"},{name:"South Korea",flag:"🇰🇷",region:"Asia"},{name:"Sri Lanka",flag:"🇱🇰",region:"Asia"},{name:"Syria",flag:"🇸🇾",region:"Asia"},{name:"Taiwan",flag:"🇹🇼",region:"Asia"},{name:"Tajikistan",flag:"🇹🇯",region:"Asia"},{name:"Thailand",flag:"🇹🇭",region:"Asia"},{name:"Timor-Leste",flag:"🇹🇱",region:"Asia"},{name:"Turkmenistan",flag:"🇹🇲",region:"Asia"},{name:"UAE",flag:"🇦🇪",region:"Asia"},{name:"Uzbekistan",flag:"🇺🇿",region:"Asia"},{name:"Vietnam",flag:"🇻🇳",region:"Asia"},{name:"Yemen",flag:"🇾🇪",region:"Asia"},
+  // Africa
+  {name:"Algeria",flag:"🇩🇿",region:"Africa"},{name:"Angola",flag:"🇦🇴",region:"Africa"},{name:"Benin",flag:"🇧🇯",region:"Africa"},{name:"Botswana",flag:"🇧🇼",region:"Africa"},{name:"Burkina Faso",flag:"🇧🇫",region:"Africa"},{name:"Cameroon",flag:"🇨🇲",region:"Africa"},{name:"Cape Verde",flag:"🇨🇻",region:"Africa"},{name:"DR Congo",flag:"🇨🇩",region:"Africa"},{name:"Egypt",flag:"🇪🇬",region:"Africa"},{name:"Ethiopia",flag:"🇪🇹",region:"Africa"},{name:"Ghana",flag:"🇬🇭",region:"Africa"},{name:"Ivory Coast",flag:"🇨🇮",region:"Africa"},{name:"Kenya",flag:"🇰🇪",region:"Africa"},{name:"Libya",flag:"🇱🇾",region:"Africa"},{name:"Madagascar",flag:"🇲🇬",region:"Africa"},{name:"Malawi",flag:"🇲🇼",region:"Africa"},{name:"Mali",flag:"🇲🇱",region:"Africa"},{name:"Mauritius",flag:"🇲🇺",region:"Africa"},{name:"Morocco",flag:"🇲🇦",region:"Africa"},{name:"Mozambique",flag:"🇲🇿",region:"Africa"},{name:"Namibia",flag:"🇳🇦",region:"Africa"},{name:"Nigeria",flag:"🇳🇬",region:"Africa"},{name:"Rwanda",flag:"🇷🇼",region:"Africa"},{name:"Senegal",flag:"🇸🇳",region:"Africa"},{name:"Seychelles",flag:"🇸🇨",region:"Africa"},{name:"Sierra Leone",flag:"🇸🇱",region:"Africa"},{name:"Somalia",flag:"🇸🇴",region:"Africa"},{name:"South Africa",flag:"🇿🇦",region:"Africa"},{name:"Sudan",flag:"🇸🇩",region:"Africa"},{name:"Tanzania",flag:"🇹🇿",region:"Africa"},{name:"Togo",flag:"🇹🇬",region:"Africa"},{name:"Tunisia",flag:"🇹🇳",region:"Africa"},{name:"Uganda",flag:"🇺🇬",region:"Africa"},{name:"Zambia",flag:"🇿🇲",region:"Africa"},{name:"Zimbabwe",flag:"🇿🇼",region:"Africa"},
+  // Americas
+  {name:"Argentina",flag:"🇦🇷",region:"Americas"},{name:"Bahamas",flag:"🇧🇸",region:"Americas"},{name:"Barbados",flag:"🇧🇧",region:"Americas"},{name:"Belize",flag:"🇧🇿",region:"Americas"},{name:"Bolivia",flag:"🇧🇴",region:"Americas"},{name:"Brazil",flag:"🇧🇷",region:"Americas"},{name:"Canada",flag:"🇨🇦",region:"Americas"},{name:"Chile",flag:"🇨🇱",region:"Americas"},{name:"Colombia",flag:"🇨🇴",region:"Americas"},{name:"Costa Rica",flag:"🇨🇷",region:"Americas"},{name:"Cuba",flag:"🇨🇺",region:"Americas"},{name:"Dominican Republic",flag:"🇩🇴",region:"Americas"},{name:"Ecuador",flag:"🇪🇨",region:"Americas"},{name:"El Salvador",flag:"🇸🇻",region:"Americas"},{name:"Guatemala",flag:"🇬🇹",region:"Americas"},{name:"Haiti",flag:"🇭🇹",region:"Americas"},{name:"Honduras",flag:"🇭🇳",region:"Americas"},{name:"Jamaica",flag:"🇯🇲",region:"Americas"},{name:"Mexico",flag:"🇲🇽",region:"Americas"},{name:"Nicaragua",flag:"🇳🇮",region:"Americas"},{name:"Panama",flag:"🇵🇦",region:"Americas"},{name:"Paraguay",flag:"🇵🇾",region:"Americas"},{name:"Peru",flag:"🇵🇪",region:"Americas"},{name:"Puerto Rico",flag:"🇵🇷",region:"Americas"},{name:"Trinidad & Tobago",flag:"🇹🇹",region:"Americas"},{name:"Uruguay",flag:"🇺🇾",region:"Americas"},{name:"USA",flag:"🇺🇸",region:"Americas"},{name:"Venezuela",flag:"🇻🇪",region:"Americas"},
+  // Oceania
+  {name:"Australia",flag:"🇦🇺",region:"Oceania"},{name:"Fiji",flag:"🇫🇯",region:"Oceania"},{name:"French Polynesia",flag:"🇵🇫",region:"Oceania"},{name:"Micronesia",flag:"🇫🇲",region:"Oceania"},{name:"New Caledonia",flag:"🇳🇨",region:"Oceania"},{name:"New Zealand",flag:"🇳🇿",region:"Oceania"},{name:"Papua New Guinea",flag:"🇵🇬",region:"Oceania"},{name:"Samoa",flag:"🇼🇸",region:"Oceania"},{name:"Solomon Islands",flag:"🇸🇧",region:"Oceania"},{name:"Tonga",flag:"🇹🇴",region:"Oceania"},{name:"Vanuatu",flag:"🇻🇺",region:"Oceania"},
+  // Middle East (subset already in Asia but adding popular ones)
+];
+
+const REGIONS = ['All', 'Europe', 'Asia', 'Africa', 'Americas', 'Oceania'];
+let activeRegion = 'All';
+
+function renderCountries() {
+  // Render region chips
+  const chipsEl = document.getElementById('insp-region-chips');
+  chipsEl.innerHTML = REGIONS.map(r =>
+    `<button class="insp-chip${r === activeRegion ? ' active' : ''}" onclick="setRegion('${r}',this)">${r}</button>`
+  ).join('');
+  filterCountries();
+}
+
+function setRegion(r, el) {
+  activeRegion = r;
+  document.querySelectorAll('.insp-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  filterCountries();
+}
+
+function filterCountries() {
+  const q = (document.getElementById('insp-search').value || '').toLowerCase();
+  let list = COUNTRIES.filter(c => {
+    if (activeRegion !== 'All' && c.region !== activeRegion) return false;
+    if (q && !c.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const grid = document.getElementById('insp-grid');
+  if (!list.length) {
+    grid.innerHTML = '<p style="color:var(--muted);padding:20px;">No countries found.</p>';
+    return;
+  }
+  const existingNames = new Set(destinations.map(d => d.name.toLowerCase()));
+  grid.innerHTML = list.map(c => {
+    const alreadyAdded = existingNames.has(c.name.toLowerCase());
+    return `<div class="country-card">
+      <div class="country-flag">${c.flag}</div>
+      <div class="country-name">${c.name}</div>
+      <div class="country-region">${c.region}</div>
+      <button class="country-add-btn${alreadyAdded ? ' added' : ''}"
+        onclick="${alreadyAdded ? '' : `addFromInspiration('${c.name.replace(/'/g,"\'")}','${c.flag}','${c.region}')`}"
+        ${alreadyAdded ? 'disabled' : ''}>
+        ${alreadyAdded ? '✓ In Scrapbook' : '+ Add to Scrapbook'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function addFromInspiration(name, flag, region) {
+  requireAuth(() => {
+    editingId = null;
+    editLinks = [];
+    document.getElementById('form-title').textContent = 'New Destination';
+    document.getElementById('delete-btn').style.display = 'none';
+    ['img','tags','notes-general','notes-stay','notes-eat','notes-do','notes-transport','notes-tips'].forEach(k => {
+      const el = document.getElementById('f-'+k);
+      if (el) el.value = '';
+    });
+    document.getElementById('f-name').value = name;
+    document.getElementById('f-country').value = region;
+    document.getElementById('f-emoji').value = flag;
+    document.getElementById('f-type').value = 'city break';
+    document.getElementById('f-status').value = 'dream';
+    renderLinksList();
+    document.getElementById('form-overlay').classList.add('open');
+  });
+}
 
 // ── INIT ──
 renderGrid();
