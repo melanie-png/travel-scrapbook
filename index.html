@@ -555,6 +555,8 @@
     <p>Destinations · Road Trips · Research</p>
   </div>
   <div class="header-right">
+    <button class="btn-secondary" onclick="exportData()" title="Download your scrapbook as a backup file">⬇ Export</button>
+    <label class="btn-secondary" style="cursor:pointer;" title="Restore from a backup file">⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importData(event)"></label>
     <button class="btn-secondary" onclick="requireAuth(openAddModal)">+ Add Destination</button>
   </div>
 </div>
@@ -971,6 +973,60 @@ document.getElementById('auth-overlay').addEventListener('click', function(e) {
 
 // ── INIT ──
 renderGrid();
+
+// ── EXPORT ──
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    destinations: destinations
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().slice(0,10);
+  a.download = `travel-scrapbook-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── IMPORT ──
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.destinations || !Array.isArray(data.destinations)) {
+        alert('Invalid backup file — no destinations found.');
+        return;
+      }
+      const action = confirm(
+        `This backup contains ${data.destinations.length} destination(s).\n\n` +
+        `Merge with your current scrapbook? (OK = merge, Cancel = replace everything)`
+      );
+      if (action) {
+        // Merge — add imported items that don't already exist (by id)
+        const existingIds = new Set(destinations.map(d => d.id));
+        const newItems = data.destinations.filter(d => !existingIds.has(d.id));
+        destinations = [...destinations, ...newItems];
+        alert(`Merged ${newItems.length} new destination(s) into your scrapbook.`);
+      } else {
+        destinations = data.destinations;
+        alert(`Replaced scrapbook with ${destinations.length} destination(s) from backup.`);
+      }
+      save();
+      renderGrid();
+    } catch(err) {
+      alert('Could not read backup file. Make sure it is a valid scrapbook export.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 </script>
 </body>
 </html>
