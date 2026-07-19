@@ -874,7 +874,7 @@
 // ── DATA ──
 const PASS = 'travel2024';
 // ── BACKEND API ───────────────────────────────────────────────────────────────
-const API_URL = 'https://api.base44.com/api/apps/69e0d5b1a62a9bab40c37f8c/functions/travelScrapbook';
+const API_URL = 'https://base44.app/api/apps/69e0d5b1a62a9bab40c37f8c/functions/travelScrapbook';
 let destinations = [];
 let filters = { status: 'all', type: 'all' };
 let editingId = null;
@@ -919,7 +919,8 @@ async function loadData() {
     renderGrid();
     renderCountryGrid();
   } catch(e) {
-    showToast('Could not connect to server.');
+    console.error('loadData error:', e);
+    showToast('Could not load data: ' + e.message);
   }
 }
 function save() {} // no-op — writes go direct via API
