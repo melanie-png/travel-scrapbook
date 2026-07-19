@@ -724,7 +724,7 @@
   <button class="filter-chip active" data-filter="status" data-val="all" onclick="setFilter('status','all',this)">All</button>
   <button class="filter-chip" data-filter="status" data-val="dream" onclick="setFilter('status','dream',this)">✨ Dream</button>
   <button class="filter-chip" data-filter="status" data-val="planning" onclick="setFilter('status','planning',this)">📋 Planning</button>
-  <button class="filter-chip" data-filter="status" data-val="done" onclick="setFilter('status','done',this)">✅ Been There</button>
+  <button class="filter-chip" data-filter="status" data-val="visited" onclick="setFilter('status','visited',this)">✅ Been There</button>
 
   <span class="filter-label" style="margin-left:12px;">Type</span>
   <button class="filter-chip active" data-filter="type" data-val="all" onclick="setFilter('type','all',this)">All</button>
@@ -788,7 +788,7 @@
         <select class="form-select" id="f-status">
           <option value="dream">✨ Dream</option>
           <option value="planning">📋 Planning</option>
-          <option value="done">✅ Been There</option>
+          <option value="visited">✅ Been There</option>
         </select>
       </div>
     </div>
@@ -967,7 +967,7 @@ function renderGrid() {
     <div class="stat-chip"><span class="num">${destinations.length}</span><span class="lbl">Total</span></div>
     <div class="stat-chip"><span class="num">${destinations.filter(d=>d.status==='dream').length}</span><span class="lbl">Dreams</span></div>
     <div class="stat-chip"><span class="num">${destinations.filter(d=>d.status==='planning').length}</span><span class="lbl">Planning</span></div>
-    <div class="stat-chip"><span class="num">${destinations.filter(d=>d.status==='done').length}</span><span class="lbl">Visited</span></div>
+    <div class="stat-chip"><span class="num">${destinations.filter(d=>d.status==='visited').length}</span><span class="lbl">Visited</span></div>
   `;
 
   const grid = document.getElementById('grid');
