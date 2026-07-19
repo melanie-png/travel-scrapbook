@@ -986,8 +986,8 @@ function renderGrid() {
     const imgEl = d.img
       ? `<img class="card-img" src="${d.img}" alt="${d.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="card-img-placeholder" style="display:none">${d.emoji||'🌍'}</div>`
       : `<div class="card-img-placeholder">${d.emoji||'🌍'}</div>`;
-    const badgeCls = { dream:'badge-dream', planning:'badge-planning', done:'badge-done' }[d.status] || 'badge-dream';
-    const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', done:'✅ Visited' }[d.status] || '';
+    const badgeCls = { dream:'badge-dream', planning:'badge-planning', visited:'badge-done' }[d.status] || 'badge-dream';
+    const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', visited:'✅ Visited' }[d.status] || '';
     const tags = d.tags ? d.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('') : '';
     const excerpt = d.notes_general || d.notesGeneral || d.notes_stay || d.notes_stay||d.notesStay || d.notes_eat || d.notes_eat||d.notesEat || 'No notes yet.';
     return `<div class="card" onclick="openDetail('${d.id}')">
@@ -1139,8 +1139,8 @@ function openDetail(id) {
     ? `<img class="detail-img" src="${d.img}" alt="${d.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="detail-img-placeholder" style="display:none">${d.emoji||'🌍'}</div>`
     : `<div class="detail-img-placeholder">${d.emoji||'🌍'}</div>`;
 
-  const badgeCls = { dream:'badge-dream', planning:'badge-planning', done:'badge-done' }[d.status] || '';
-  const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', done:'✅ Visited' }[d.status] || '';
+  const badgeCls = { dream:'badge-dream', planning:'badge-planning', visited:'badge-done' }[d.status] || '';
+  const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', visited:'✅ Visited' }[d.status] || '';
   const tags = d.tags ? d.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('') : '';
 
   const noteBlocks = [
