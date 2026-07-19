@@ -917,7 +917,7 @@ async function loadData() {
   try {
     destinations = await apiGet();
     renderGrid();
-    renderCountryGrid();
+    renderCountries();
   } catch(e) {
     console.error('loadData error:', e);
     showToast('Could not load data: ' + e.message);
@@ -1324,7 +1324,7 @@ function markVisited(name, flag, region) {
         showToast(`${flag} ${name} added to your Visited list!`);
       }
       renderGrid();
-      renderCountryGrid();
+      renderCountries();
     } catch(e) {
       showToast('Could not save — check connection.');
     }
