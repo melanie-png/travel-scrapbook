@@ -878,8 +878,14 @@
 <script>
 // ── DATA ──
 const PASS = 'travel2024';
-// ── BACKEND API ───────────────────────────────────────────────────────────────
-const API_URL = 'https://base44.app/api/apps/69e0d5b1a62a9bab40c37f8c/functions/travelScrapbook';
+// ── GITHUB-NATIVE STORAGE ────────────────────────────────────────────────────
+// Data lives in data.json in melanie-png/travel-scrapbook (public repo).
+// READ:  raw.githubusercontent.com — public, no auth required, always available.
+// WRITE: POST to Base44 backend function (password-gated) — it writes to GitHub server-side.
+//        GitHub token never touches the browser.
+const GH_RAW    = 'https://raw.githubusercontent.com/melanie-png/travel-scrapbook/main/data.json';
+const WRITE_URL = 'https://base44.app/api/apps/69e0d5b1a62a9bab40c37f8c/functions/travelScrapbook';
+
 let destinations = [];
 let filters = { status: 'all', type: 'all' };
 let editingId = null;
@@ -889,34 +895,45 @@ let editLinks = [];
 let _authPassword = null;
 
 async function apiGet() {
-  const r = await fetch(API_URL);
-  if (!r.ok) throw new Error('Failed to load');
+  const r = await fetch(GH_RAW + '?v=' + Date.now());
+  if (!r.ok) throw new Error('Failed to load data');
   return r.json();
 }
-async function apiCreate(dest) {
-  const r = await fetch(API_URL, {
+
+async function _ghWrite(newData, msg) {
+  const r = await fetch(WRITE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Password': _authPassword },
-    body: JSON.stringify(dest)
+    body: JSON.stringify({ data: newData, message: msg })
   });
-  if (!r.ok) throw new Error('Failed to save');
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.error || 'Write failed');
+  }
   return r.json();
 }
+
+function _makeId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+async function apiCreate(dest) {
+  const newDest = { ...dest, id: _makeId() };
+  const updated = [...destinations, newDest];
+  await _ghWrite(updated, 'add: ' + dest.name);
+  return newDest;
+}
+
 async function apiUpdate(id, dest) {
-  const r = await fetch(API_URL + '?id=' + id, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'X-Password': _authPassword },
-    body: JSON.stringify(dest)
-  });
-  if (!r.ok) throw new Error('Failed to update');
-  return r.json();
+  const updated = destinations.map(d => d.id === id ? { ...dest, id } : d);
+  await _ghWrite(updated, 'update: ' + dest.name);
+  return { ...dest, id };
 }
+
 async function apiDelete(id) {
-  const r = await fetch(API_URL + '?id=' + id, {
-    method: 'DELETE',
-    headers: { 'X-Password': _authPassword }
-  });
-  if (!r.ok) throw new Error('Failed to delete');
+  const target = destinations.find(d => d.id === id);
+  const updated = destinations.filter(d => d.id !== id);
+  await _ghWrite(updated, 'delete: ' + (target?.name || id));
 }
 async function loadData() {
   try {
