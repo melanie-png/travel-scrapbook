@@ -870,16 +870,56 @@
 <script>
 // ── DATA ──
 const PASS = 'travel2024';
-let destinations = JSON.parse(localStorage.getItem('travel_destinations') || '[]');
+// ── BACKEND API ───────────────────────────────────────────────────────────────
+const API_URL = 'https://api.base44.com/api/apps/69e0d5b1a62a9bab40c37f8c/functions/travelScrapbook';
+let destinations = [];
 let filters = { status: 'all', type: 'all' };
 let editingId = null;
 let pendingAction = null;
 let isAuthed = false;
 let editLinks = [];
+let _authPassword = null;
 
-function save() {
-  localStorage.setItem('travel_destinations', JSON.stringify(destinations));
+async function apiGet() {
+  const r = await fetch(API_URL);
+  if (!r.ok) throw new Error('Failed to load');
+  return r.json();
 }
+async function apiCreate(dest) {
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Password': _authPassword },
+    body: JSON.stringify(dest)
+  });
+  if (!r.ok) throw new Error('Failed to save');
+  return r.json();
+}
+async function apiUpdate(id, dest) {
+  const r = await fetch(API_URL + '?id=' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Password': _authPassword },
+    body: JSON.stringify(dest)
+  });
+  if (!r.ok) throw new Error('Failed to update');
+  return r.json();
+}
+async function apiDelete(id) {
+  const r = await fetch(API_URL + '?id=' + id, {
+    method: 'DELETE',
+    headers: { 'X-Password': _authPassword }
+  });
+  if (!r.ok) throw new Error('Failed to delete');
+}
+async function loadData() {
+  try {
+    destinations = await apiGet();
+    renderGrid();
+    renderCountryGrid();
+  } catch(e) {
+    showToast('Could not connect to server.');
+  }
+}
+function save() {} // no-op — writes go direct via API
 
 // ── AUTH ──
 function requireAuth(action) {
@@ -893,6 +933,7 @@ function checkAuth() {
   const val = document.getElementById('auth-input').value;
   if (val === PASS) {
     isAuthed = true;
+    _authPassword = val;
     document.getElementById('auth-overlay').classList.remove('open');
     document.getElementById('auth-input').value = '';
     document.getElementById('auth-error').textContent = '';
@@ -942,7 +983,7 @@ function renderGrid() {
     const badgeCls = { dream:'badge-dream', planning:'badge-planning', done:'badge-done' }[d.status] || 'badge-dream';
     const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', done:'✅ Visited' }[d.status] || '';
     const tags = d.tags ? d.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('') : '';
-    const excerpt = d.notesGeneral || d.notesStay || d.notesEat || d.notesDo || 'No notes yet.';
+    const excerpt = d.notes_general || d.notesGeneral || d.notes_stay || d.notes_stay||d.notesStay || d.notes_eat || d.notes_eat||d.notesEat || 'No notes yet.';
     return `<div class="card" onclick="openDetail('${d.id}')">
       <div style="position:relative;">
         ${imgEl}
@@ -992,12 +1033,12 @@ function openEditModal(id) {
   document.getElementById('f-tags').value = d.tags || '';
   document.getElementById('f-type').value = d.type || 'road trip';
   document.getElementById('f-status').value = d.status || 'dream';
-  document.getElementById('f-notes-general').value = d.notesGeneral || '';
-  document.getElementById('f-notes-stay').value = d.notesStay || '';
-  document.getElementById('f-notes-eat').value = d.notesEat || '';
-  document.getElementById('f-notes-do').value = d.notesDo || '';
-  document.getElementById('f-notes-transport').value = d.notesTransport || '';
-  document.getElementById('f-notes-tips').value = d.notesTips || '';
+  document.getElementById('f-notes-general').value = d.notes_general || d.notesGeneral || '';
+  document.getElementById('f-notes-stay').value = d.notes_stay || d.notes_stay||d.notesStay || '';
+  document.getElementById('f-notes-eat').value = d.notes_eat || d.notes_eat||d.notesEat || '';
+  document.getElementById('f-notes-do').value = d.notes_do || d.notes_do||d.notesDo || '';
+  document.getElementById('f-notes-transport').value = d.notes_transport || d.notes_transport||d.notesTransport || '';
+  document.getElementById('f-notes-tips').value = d.notes_tips || d.notes_tips||d.notesTips || '';
   renderLinksList();
   document.getElementById('form-overlay').classList.add('open');
   document.getElementById('detail-overlay').classList.remove('open');
@@ -1007,12 +1048,11 @@ function closeFormModal() {
   document.getElementById('form-overlay').classList.remove('open');
 }
 
-function saveDestination() {
+async function saveDestination() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { alert('Please enter a destination name.'); return; }
 
   const d = {
-    id: editingId || Date.now().toString(),
     name,
     country: document.getElementById('f-country').value.trim(),
     img: document.getElementById('f-img').value.trim(),
@@ -1020,33 +1060,43 @@ function saveDestination() {
     tags: document.getElementById('f-tags').value.trim(),
     type: document.getElementById('f-type').value,
     status: document.getElementById('f-status').value,
-    notesGeneral: document.getElementById('f-notes-general').value.trim(),
-    notesStay: document.getElementById('f-notes-stay').value.trim(),
-    notesEat: document.getElementById('f-notes-eat').value.trim(),
-    notesDo: document.getElementById('f-notes-do').value.trim(),
-    notesTransport: document.getElementById('f-notes-transport').value.trim(),
-    notesTips: document.getElementById('f-notes-tips').value.trim(),
-    links: editLinks,
-    updatedAt: new Date().toISOString()
+    notes_general: document.getElementById('f-notes-general').value.trim(),
+    notes_stay: document.getElementById('f-notes-stay').value.trim(),
+    notes_eat: document.getElementById('f-notes-eat').value.trim(),
+    notes_do: document.getElementById('f-notes-do').value.trim(),
+    notes_transport: document.getElementById('f-notes-transport').value.trim(),
+    notes_tips: document.getElementById('f-notes-tips').value.trim(),
+    links: editLinks
   };
 
-  if (editingId) {
-    const idx = destinations.findIndex(x => x.id === editingId);
-    destinations[idx] = d;
-  } else {
-    destinations.unshift(d);
+  try {
+    if (editingId) {
+      const updated = await apiUpdate(editingId, d);
+      const idx = destinations.findIndex(x => x.id === editingId);
+      if (idx >= 0) destinations[idx] = updated;
+    } else {
+      const created = await apiCreate(d);
+      destinations.unshift(created);
+    }
+    closeFormModal();
+    renderGrid();
+    showToast('Destination saved!');
+  } catch(e) {
+    showToast('Save failed — check connection.');
   }
-  save();
-  closeFormModal();
-  renderGrid();
 }
 
-function deleteDestination() {
+async function deleteDestination() {
   if (!confirm('Delete this destination? This cannot be undone.')) return;
-  destinations = destinations.filter(x => x.id !== editingId);
-  save();
-  closeFormModal();
-  renderGrid();
+  try {
+    await apiDelete(editingId);
+    destinations = destinations.filter(x => x.id !== editingId);
+    closeFormModal();
+    renderGrid();
+    showToast('Destination deleted.');
+  } catch(e) {
+    showToast('Delete failed — check connection.');
+  }
 }
 
 // ── LINKS ──
@@ -1088,12 +1138,12 @@ function openDetail(id) {
   const tags = d.tags ? d.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('') : '';
 
   const noteBlocks = [
-    d.notesGeneral ? `<div class="note-block full"><h4>📝 General Notes</h4><p>${d.notesGeneral}</p></div>` : '',
-    d.notesStay ? `<div class="note-block"><h4>🛏 Where to Stay</h4><p>${d.notesStay}</p></div>` : '',
-    d.notesEat ? `<div class="note-block"><h4>🍽 Where to Eat</h4><p>${d.notesEat}</p></div>` : '',
-    d.notesDo ? `<div class="note-block"><h4>📍 Things to Do</h4><p>${d.notesDo}</p></div>` : '',
-    d.notesTransport ? `<div class="note-block"><h4>🚗 Getting There</h4><p>${d.notesTransport}</p></div>` : '',
-    d.notesTips ? `<div class="note-block full"><h4>💡 Tips & Warnings</h4><p>${d.notesTips}</p></div>` : '',
+    (d.notes_general||d.notesGeneral) ? `<div class="note-block full"><h4>📝 General Notes</h4><p>${d.notes_general||d.notesGeneral}</p></div>` : '',
+    d.notes_stay||d.notesStay ? `<div class="note-block"><h4>🛏 Where to Stay</h4><p>${d.notes_stay||d.notesStay}</p></div>` : '',
+    d.notes_eat||d.notesEat ? `<div class="note-block"><h4>🍽 Where to Eat</h4><p>${d.notes_eat||d.notesEat}</p></div>` : '',
+    d.notes_do||d.notesDo ? `<div class="note-block"><h4>📍 Things to Do</h4><p>${d.notes_do||d.notesDo}</p></div>` : '',
+    d.notes_transport||d.notesTransport ? `<div class="note-block"><h4>🚗 Getting There</h4><p>${d.notes_transport||d.notesTransport}</p></div>` : '',
+    d.notes_tips||d.notesTips ? `<div class="note-block full"><h4>💡 Tips & Warnings</h4><p>${d.notes_tips||d.notesTips}</p></div>` : '',
   ].filter(Boolean).join('');
 
   const linksHtml = d.links && d.links.length
@@ -1240,41 +1290,30 @@ function addFromInspiration(name, flag, region) {
 }
 
 function markVisited(name, flag, region) {
-  requireAuth(() => {
-    // Check if already in scrapbook
+  requireAuth(async () => {
     const existing = destinations.find(d => d.name.toLowerCase() === name.toLowerCase());
-    if (existing) {
-      // Already there — just flip status to visited
-      existing.status = 'visited';
-      save();
+    try {
+      if (existing) {
+        const updated = await apiUpdate(existing.id, { ...existing, status: 'visited', links: existing.links || [] });
+        const idx = destinations.findIndex(x => x.id === existing.id);
+        if (idx >= 0) destinations[idx] = updated;
+        showToast(`${flag} ${name} marked as visited!`);
+      } else {
+        const newDest = { name, country: region, emoji: flag, type: 'city break', status: 'visited', img: '', tags: '', notes_general: '', notes_stay: '', notes_eat: '', notes_do: '', notes_transport: '', notes_tips: '', links: [] };
+        const created = await apiCreate(newDest);
+        destinations.push(created);
+        showToast(`${flag} ${name} added to your Visited list!`);
+      }
       renderGrid();
       renderCountryGrid();
-      showToast(`${flag} ${name} marked as visited!`);
-    } else {
-      // Not yet in scrapbook — create a new visited entry instantly
-      const newDest = {
-        id: Date.now().toString(),
-        name,
-        country: region,
-        emoji: flag,
-        type: 'city break',
-        status: 'visited',
-        img: '',
-        tags: '',
-        notes: { general: '', stay: '', eat: '', do: '', transport: '', tips: '' },
-        links: []
-      };
-      destinations.push(newDest);
-      save();
-      renderGrid();
-      renderCountryGrid();
-      showToast(`${flag} ${name} added to your Visited list!`);
+    } catch(e) {
+      showToast('Could not save — check connection.');
     }
   });
 }
 
 // ── INIT ──
-renderGrid();
+loadData();
 
 // ── EXPORT ──
 function exportData() {
