@@ -749,7 +749,10 @@
 <div id="inspiration-section" style="display:none;">
   <div class="insp-search-bar">
     <input class="search-input" type="text" id="insp-search" placeholder="🔍 Search countries or regions…" oninput="filterCountries()" style="width:300px;">
-    <div class="insp-region-chips" id="insp-region-chips"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div class="insp-region-chips" id="insp-region-chips"></div>
+      <button id="hide-visited-btn" class="insp-chip" onclick="toggleHideVisited(this)" style="margin-left:8px;background:var(--white);border:2px solid var(--border);">🙈 Hide Visited</button>
+    </div>
   </div>
   <div class="insp-grid" id="insp-grid"></div>
 </div>
@@ -1219,6 +1222,7 @@ const COUNTRIES = [
 
 const REGIONS = ['All', 'Europe', 'Asia', 'Africa', 'Americas', 'Oceania'];
 let activeRegion = 'All';
+let hideVisited = false;
 
 function renderCountries() {
   // Render region chips
@@ -1226,6 +1230,15 @@ function renderCountries() {
   chipsEl.innerHTML = REGIONS.map(r =>
     `<button class="insp-chip${r === activeRegion ? ' active' : ''}" onclick="setRegion('${r}',this)">${r}</button>`
   ).join('');
+  filterCountries();
+}
+
+function toggleHideVisited(btn) {
+  hideVisited = !hideVisited;
+  btn.style.background = hideVisited ? 'var(--terracotta)' : 'var(--white)';
+  btn.style.color = hideVisited ? '#fff' : '';
+  btn.style.borderColor = hideVisited ? 'var(--terracotta)' : 'var(--border)';
+  btn.textContent = hideVisited ? '👁 Show Visited' : '🙈 Hide Visited';
   filterCountries();
 }
 
@@ -1238,11 +1251,14 @@ function setRegion(r, el) {
 
 function filterCountries() {
   const q = (document.getElementById('insp-search').value || '').toLowerCase();
+  const visitedSet = new Set(destinations.filter(d => d.status === 'visited').map(d => d.name.toLowerCase()));
   let list = COUNTRIES.filter(c => {
     if (activeRegion !== 'All' && c.region !== activeRegion) return false;
     if (q && !c.name.toLowerCase().includes(q)) return false;
+    if (hideVisited && visitedSet.has(c.name.toLowerCase())) return false;
     return true;
   });
+  list = list.slice().sort((a, b) => a.name.localeCompare(b.name));
   const grid = document.getElementById('insp-grid');
   if (!list.length) {
     grid.innerHTML = '<p style="color:var(--muted);padding:20px;">No countries found.</p>';
@@ -1313,6 +1329,22 @@ function markVisited(name, flag, region) {
     }
   });
 }
+
+// ── TOAST NOTIFICATIONS ──
+function showToast(msg) {
+  let t = document.getElementById('_toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#3a3a2a;color:#f5f0e8;padding:10px 22px;border-radius:24px;font-size:0.9rem;font-family:Lato,sans-serif;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.3);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+}
+
 
 // ── INIT ──
 // Restore auth state from sessionStorage (survives page reload within same tab session)
