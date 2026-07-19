@@ -1210,6 +1210,11 @@ function filterCountries() {
         ${alreadyAdded ? 'disabled' : ''}>
         ${alreadyAdded ? '✓ In Scrapbook' : '+ Add to Scrapbook'}
       </button>
+      <button class="country-visited-btn${alreadyVisited ? ' visited-done' : ''}"
+        onclick="${alreadyVisited ? '' : `markVisited('${c.name.replace(/'/g,"\'")}','${c.flag}','${c.region}')`}"
+        ${alreadyVisited ? 'disabled' : ''}>
+        ${alreadyVisited ? '✓ Visited' : '📍 Mark as Visited'}
+      </button>
     </div>`;
   }).join('');
 }
