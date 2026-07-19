@@ -258,6 +258,7 @@
   .badge-dream { background: #f5e0c0; color: #7a5c3a; border: 1px solid #d4a870; font-style: italic; }
   .badge-planning { background: #d4eacc; color: #3d5a35; border: 1px solid #90b878; }
   .badge-done { background: #c8603a; color: #fff; border: 1px solid #a84828; letter-spacing: 0.5px; }
+  .badge-again { background: #7a9e7e; color: #fff; border: 1px solid #5a7e5e; letter-spacing: 0.5px; }
 
   .card-body { padding: 18px 20px 20px; }
   .card-type {
@@ -727,6 +728,7 @@
   <button class="filter-chip" data-filter="status" data-val="dream" onclick="setFilter('status','dream',this)">✨ Dream</button>
   <button class="filter-chip" data-filter="status" data-val="planning" onclick="setFilter('status','planning',this)">📋 Planning</button>
   <button class="filter-chip" data-filter="status" data-val="visited" onclick="setFilter('status','visited',this)">✅ Been There</button>
+    <button class="filter-chip" data-filter="status" data-val="again" onclick="setFilter('status','again',this)">🔁 Visit Again</button>
 
   <span class="filter-label" style="margin-left:12px;">Type</span>
   <button class="filter-chip active" data-filter="type" data-val="all" onclick="setFilter('type','all',this)">All</button>
@@ -794,6 +796,7 @@
           <option value="dream">✨ Dream</option>
           <option value="planning">📋 Planning</option>
           <option value="visited">✅ Been There</option>
+              <option value="again">🔁 Visit Again</option>
         </select>
       </div>
     </div>
@@ -982,6 +985,7 @@ function renderGrid() {
     <div class="stat-chip ${filters.status==='dream'?'active-stat':''}" onclick="clickStat('dream')"><span class="num">${destinations.filter(d=>d.status==='dream').length}</span><span class="lbl">Dreams</span></div>
     <div class="stat-chip ${filters.status==='planning'?'active-stat':''}" onclick="clickStat('planning')"><span class="num">${destinations.filter(d=>d.status==='planning').length}</span><span class="lbl">Planning</span></div>
     <div class="stat-chip ${filters.status==='visited'?'active-stat':''}" onclick="clickStat('visited')"><span class="num">${destinations.filter(d=>d.status==='visited').length}</span><span class="lbl">Visited</span></div>
+    <div class="stat-chip ${filters.status==='again'?'active-stat':''}" onclick="clickStat('again')"><span class="num">${destinations.filter(d=>d.status==='again').length}</span><span class="lbl">Visit Again</span></div>
   `;
 
   const grid = document.getElementById('grid');
@@ -994,8 +998,8 @@ function renderGrid() {
     const imgEl = d.img
       ? `<img class="card-img" src="${d.img}" alt="${d.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="card-img-placeholder" style="display:none">${d.emoji||'🌍'}</div>`
       : `<div class="card-img-placeholder">${d.emoji||'🌍'}</div>`;
-    const badgeCls = { dream:'badge-dream', planning:'badge-planning', visited:'badge-done' }[d.status] || 'badge-dream';
-    const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', visited:'✅ Visited' }[d.status] || '';
+    const badgeCls = { dream:'badge-dream', planning:'badge-planning', visited:'badge-done', again:'badge-again' }[d.status] || 'badge-dream';
+    const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', visited:'✅ Visited', again:'🔁 Visit Again' }[d.status] || '';
     const tags = d.tags ? d.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('') : '';
     const excerpt = d.notes_general || d.notesGeneral || d.notes_stay || d.notes_stay||d.notesStay || d.notes_eat || d.notes_eat||d.notesEat || 'No notes yet.';
     return `<div class="card" onclick="openDetail('${d.id}')">
@@ -1147,8 +1151,8 @@ function openDetail(id) {
     ? `<img class="detail-img" src="${d.img}" alt="${d.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="detail-img-placeholder" style="display:none">${d.emoji||'🌍'}</div>`
     : `<div class="detail-img-placeholder">${d.emoji||'🌍'}</div>`;
 
-  const badgeCls = { dream:'badge-dream', planning:'badge-planning', visited:'badge-done' }[d.status] || '';
-  const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', visited:'✅ Visited' }[d.status] || '';
+  const badgeCls = { dream:'badge-dream', planning:'badge-planning', visited:'badge-done', again:'badge-again' }[d.status] || '';
+  const badgeTxt = { dream:'✨ Dream', planning:'📋 Planning', visited:'✅ Visited', again:'🔁 Visit Again' }[d.status] || '';
   const tags = d.tags ? d.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('') : '';
 
   const noteBlocks = [
