@@ -649,7 +649,28 @@
     transition: background 0.2s;
   }
   .country-add-btn:hover { background: #a8573e; }
-  .country-add-btn.added { background: var(--sage); cursor: default; }
+  .country-visited-btn {
+  padding: 7px 10px;
+  background: var(--terracotta, #c47a5a);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  white-space: nowrap;
+}
+.country-visited-btn:hover:not(:disabled) {
+  background: #a85e3e;
+}
+.country-visited-btn.visited-done {
+  background: #7a9e7e;
+  cursor: default;
+  opacity: 0.85;
+}
+
+.country-add-btn.added { background: var(--sage); cursor: default; }
 
   @media (max-width: 600px) {
     .header { padding: 20px; flex-direction: column; gap: 14px; align-items: flex-start; }
@@ -1176,8 +1197,10 @@ function filterCountries() {
     return;
   }
   const existingNames = new Set(destinations.map(d => d.name.toLowerCase()));
+  const visitedNames  = new Set(destinations.filter(d => d.status === 'visited').map(d => d.name.toLowerCase()));
   grid.innerHTML = list.map(c => {
-    const alreadyAdded = existingNames.has(c.name.toLowerCase());
+    const alreadyAdded   = existingNames.has(c.name.toLowerCase());
+    const alreadyVisited = visitedNames.has(c.name.toLowerCase());
     return `<div class="country-card">
       <div class="country-flag">${c.flag}</div>
       <div class="country-name">${c.name}</div>
@@ -1208,6 +1231,40 @@ function addFromInspiration(name, flag, region) {
     document.getElementById('f-status').value = 'dream';
     renderLinksList();
     document.getElementById('form-overlay').classList.add('open');
+  });
+}
+
+function markVisited(name, flag, region) {
+  requireAuth(() => {
+    // Check if already in scrapbook
+    const existing = destinations.find(d => d.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      // Already there — just flip status to visited
+      existing.status = 'visited';
+      save();
+      renderGrid();
+      renderCountryGrid();
+      showToast(`${flag} ${name} marked as visited!`);
+    } else {
+      // Not yet in scrapbook — create a new visited entry instantly
+      const newDest = {
+        id: Date.now().toString(),
+        name,
+        country: region,
+        emoji: flag,
+        type: 'city break',
+        status: 'visited',
+        img: '',
+        tags: '',
+        notes: { general: '', stay: '', eat: '', do: '', transport: '', tips: '' },
+        links: []
+      };
+      destinations.push(newDest);
+      save();
+      renderGrid();
+      renderCountryGrid();
+      showToast(`${flag} ${name} added to your Visited list!`);
+    }
   });
 }
 
