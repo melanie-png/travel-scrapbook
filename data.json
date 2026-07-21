@@ -357,21 +357,23 @@
     "links": []
   },
   {
-    "id": "6a5ca334d39e10efeafc061c",
     "name": "North Cyprus",
     "country": "Cyprus",
+    "img": "",
     "emoji": "🎰",
+    "tags": "",
     "type": "road trip",
     "status": "planning",
-    "img": "",
-    "tags": "",
-    "notes_general": "Peter's 49th",
+    "notes_general": "Peter's 49th\nTravel in 9th October\nTravel out 18th October",
     "notes_stay": "Chamada Prestige Hotel and Casino, Royal Diamond Merit",
     "notes_eat": "",
     "notes_do": "",
     "notes_transport": "",
     "notes_tips": "",
-    "links": []
+    "links": [
+      "https://docs.google.com/spreadsheets/d/1tBPyXzVCbXxn1cyZ6KKEHNZtW_CZ65vCyaJlM_X8xgU/edit?pli=1&gid=0#gid=0"
+    ],
+    "id": "6a5ca334d39e10efeafc061c"
   },
   {
     "id": "6a5ca2e6aab500d7c5010f10",
